@@ -23,6 +23,30 @@ const validatePaper = (paper) => {
   // - "Valid year after 1900 is required"
   const errors = [];
 
+    // 1. title: non-empty string
+    if (!paper.title || paper.title.trim() === "") {
+      errors.push("Title is required");
+    }
+  
+    // 2. authors: non-empty string
+    if (!paper.authors || paper.authors.trim() === "") {
+      errors.push("Authors is required");
+    }
+  
+    // 3. published_in: non-empty string
+    if (!paper.published_in || paper.published_in.trim() === "") {
+      errors.push("Published venue is required");
+    }
+
+    if (paper.year === undefined || paper.year === null || paper.year === "") {
+      errors.push("Published year is required");
+    } else {
+      const yearInt = parseInt(paper.year, 10);
+      if (isNaN(yearInt) || yearInt <= 1900) {
+        errors.push("Valid year after 1900 is required");
+      }
+    }
+
   return errors;
 };
 
@@ -51,7 +75,25 @@ const errorHandler = (err, req, res, next) => {
   // Remember to:
   // - Log errors for debugging (console.error)
   // - Send appropriate status codes (400, 404)
+  
   console.error(err);
+
+  if (err.type === "Validation_Error") {
+    res.status(400).json({
+      error: "Validation Error",
+      messages: err.messages,
+    });
+  }else if (err.type === "Invalid_Query_Parameter"){
+    res.status(400).json({
+      error: "Validation Error",
+      message: "Invalid query parameter format",
+    });
+  }
+
+
+
+
+
 };
 
 // Validate ID parameter middleware

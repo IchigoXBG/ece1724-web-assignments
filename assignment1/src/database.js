@@ -34,6 +34,23 @@ const dbOperations = {
     // } catch (error) {
     //   throw error;
     // }
+    
+    try {
+      const result = await new Promise((resolve, reject) => {
+        db.run(
+          "INSERT INTO papers (title, authors, published_in, year) VALUES (?, ?, ?, ?)",
+          [paper.title, paper.authors, paper.published_in, paper.year],
+          function(err) {
+            if (err) reject(err);
+            else resolve(this.lastID);
+          }
+        );
+      });
+      return { id: result, ...paper };
+    } catch (error) {
+      throw error;
+    }
+
   },
 
   getAllPapers: async (filters = {}) => {
@@ -59,11 +76,91 @@ const dbOperations = {
     //     else resolve(rows);
     //   });
     // });
+    const maxLimit = 100;
+
+    let query = "SELECT * FROM papers WHERE 1=1 ";
+    const params = [];
+
+
+    if (filters.year !== undefined && filters.year !== null){
+      if(filters.year >= 1900){
+        query += "AND year = ? ";
+        params.push(filters.year);
+      }else{
+        throw { type: "Invalid_Query_Parameter"};
+      }
+    }
+
+    if (filters.published_in !== undefined && filters.published_in !== null) {
+      query += " AND published_in LIKE ? COLLATE NOCASE";
+      params.push(`%${filters.published_in}%`);
+    }
+
+
+    // Paging Control
+    query += " LIMIT ? OFFSET ?";
+
+    if ( filters.limit !== undefined && filters.limit !== null ){
+      if (filters.limit <= maxLimit || filters.limit >= 0) {
+        params.push(filters.limit);
+      }else{
+        throw { type: "Invalid_Query_Parameter"};
+      }
+    }else{
+      filters.limit = 10;
+      params.push(filters.limit);
+    }
+
+    if (filters.offset !== undefined && filters.offset !== null ){
+      if (filters.offset >= 0) {
+        params.push(filters.offset);
+      } else{
+        throw { type: "Invalid_Query_Parameter"};
+      }
+    } else{
+      filters.offset = 0;
+      params.push(filters.offset);
+    }
+
+    console.log("query: ",query);
+
+    try {
+      const result = await new Promise((resolve, reject) => {
+        db.all(
+          query,
+          params,
+          function(err, rows) {
+            if (err) reject(err);
+            else resolve(rows);
+          }
+        );
+      });
+      return { ...result };
+    } catch (error) {
+      throw error;
+    }
+
+
+
+
+
   },
 
   getPaperById: async (id) => {
     // Your implementation here
     // Hint: Use await with a new Promise that wraps the db.get() operation
+    try {
+      const result = await new Promise((resolve, reject) => {
+        db.get("SELECT * FROM papers WHERE id =?", [id], (err, row) => {
+          if (err) reject(err);
+          else resolve(row);
+        });
+      });
+      return result;
+    } catch (error) {
+      throw error;
+    }
+    
   },
 
   updatePaper: async (id, paper) => {
