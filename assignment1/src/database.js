@@ -76,20 +76,18 @@ const dbOperations = {
     //     else resolve(rows);
     //   });
     // });
-    const maxLimit = 100;
+    
 
     let query = "SELECT * FROM papers WHERE 1=1 ";
     const params = [];
 
 
-    if (filters.year !== undefined && filters.year !== null){
-      if(filters.year >= 1900){
+    if (filters.year !== null){
         query += "AND year = ? ";
         params.push(filters.year);
-      }else{
-        throw { type: "Invalid_Query_Parameter"};
-      }
     }
+
+
 
     if (filters.published_in !== undefined && filters.published_in !== null) {
       query += " AND published_in LIKE ? COLLATE NOCASE";
@@ -100,29 +98,13 @@ const dbOperations = {
     // Paging Control
     query += " LIMIT ? OFFSET ?";
 
-    if ( filters.limit !== undefined && filters.limit !== null ){
-      if (filters.limit <= maxLimit || filters.limit >= 0) {
-        params.push(filters.limit);
-      }else{
-        throw { type: "Invalid_Query_Parameter"};
-      }
-    }else{
-      filters.limit = 10;
-      params.push(filters.limit);
-    }
 
-    if (filters.offset !== undefined && filters.offset !== null ){
-      if (filters.offset >= 0) {
-        params.push(filters.offset);
-      } else{
-        throw { type: "Invalid_Query_Parameter"};
-      }
-    } else{
-      filters.offset = 0;
-      params.push(filters.offset);
-    }
+    params.push(filters.limit);
+    params.push(filters.offset);
 
-    console.log("query: ",query);
+
+
+
 
     try {
       const result = await new Promise((resolve, reject) => {
@@ -165,6 +147,34 @@ const dbOperations = {
 
   updatePaper: async (id, paper) => {
     // Your implementation here
+    try{
+      
+      await new Promise((resolve, reject) => {
+        db.run(`UPDATE papers
+                SET 
+                  title = ?, 
+                  authors = ?, 
+                  published_in = ?, 
+                  year = ?, 
+                  updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?;
+                `, [paper.title, paper.authors, paper.published_in, paper.year, id], (err, row) => {
+          if (err) {
+            reject(err);
+          }
+          else{
+            resolve(this);
+          }
+        });
+      });
+
+  
+
+    }catch (error) {
+      throw error;
+    }
+
+
   },
 
   deletePaper: async (id) => {
@@ -172,4 +182,8 @@ const dbOperations = {
   },
 };
 
-module.exports = dbOperations;
+module.exports = {
+  db, // export the database instance
+  ...dbOperations, // spreads all operations as individual exports
+};
+

@@ -17,7 +17,7 @@ const validatePaper = (paper) => {
   //
   // Error message format should match the handout, for example:
   // - "Title is required"
-  // - "Author is required"
+  // - "Authors are required"
   // - "Published venue is required"
   // - "Published year is required"
   // - "Valid year after 1900 is required"
@@ -30,7 +30,7 @@ const validatePaper = (paper) => {
   
     // 2. authors: non-empty string
     if (!paper.authors || paper.authors.trim() === "") {
-      errors.push("Authors is required");
+      errors.push("Authors are required");
     }
   
     // 3. published_in: non-empty string
@@ -42,7 +42,7 @@ const validatePaper = (paper) => {
       errors.push("Published year is required");
     } else {
       const yearInt = parseInt(paper.year, 10);
-      if (isNaN(yearInt) || yearInt <= 1900) {
+      if (isNaN(yearInt) || yearInt <= 1900 || yearInt > new Date().getFullYear() ) {
         errors.push("Valid year after 1900 is required");
       }
     }
@@ -88,7 +88,12 @@ const errorHandler = (err, req, res, next) => {
       error: "Validation Error",
       message: "Invalid query parameter format",
     });
+  }else if (err.type === "Not_Found_Error"){
+    res.status(404).json({
+      "error": "Paper not found"
+    });
   }
+ 
 
 
 
@@ -108,6 +113,23 @@ const validateId = (req, res, next) => {
   // }
   //
   // If valid, call next()
+
+
+  if ( isNaN(req.params.id) || req.params.id === undefined || req.params.id === null || req.params.id < 0 ) {
+    res.status(400).json({
+      "error": "Validation Error",
+      "message": "Invalid ID format"
+    });
+  }
+  else{
+
+    next();
+
+  }
+
+
+  
+  
 };
 
 module.exports = {
