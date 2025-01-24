@@ -136,9 +136,18 @@ router.put("/papers/:id", validateId, async (req, res, next) => {
 });
 
 // DELETE /api/papers/:id
-router.delete("/papers/:id", async (req, res, next) => {
+router.delete("/papers/:id", validateId, async (req, res, next) => {
   try {
-    // Your implementation here
+    
+    const result_paper = await dbOperations.getPaperById(req.params.id);
+    if (result_paper === undefined || result_paper === null) {
+      throw { type: "Not_Found_Error" };
+    }
+
+    await dbOperations.deletePaper(req.params.id);
+
+    res.status(204).send();
+
   } catch (error) {
     next(error);
   }
