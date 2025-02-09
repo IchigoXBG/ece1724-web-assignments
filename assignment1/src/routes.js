@@ -10,13 +10,13 @@ router.get("/papers", async (req, res, next) => {
     const filters = {
       year: req.query.year,
       published_in: req.query.published_in,
-      limit: req.query.limit ? req.query.limit === undefined : 10,
-      offset: req.query.offset ? req.query.offset === undefined : 0,
+      limit: req.query.limit !== undefined ? req.query.limit : 10,
+      offset: req.query.offset !== undefined ? req.query.offset : 0,
     };
 
     const maxLimit = 100;
 
-    
+    console.log("filters.limit=",typeof filters.limit);
     
 
     if (filters.year !== undefined){
@@ -33,7 +33,7 @@ router.get("/papers", async (req, res, next) => {
     }
 
 
-    if (isNaN(filters.offset) || filters.offset.trim() === "" || !/^\d+$/.test(filters.offset) || parseInt(filters.offset) < 0 ) {
+    if (isNaN(filters.offset) || !/^\d+$/.test(filters.offset) || parseInt(filters.offset) < 0 ) {
       throw { type: "Invalid_Query_Parameter"};
     } 
 
