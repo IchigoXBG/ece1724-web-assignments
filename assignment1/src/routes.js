@@ -8,26 +8,32 @@ const dbOperations = require("./database");
 router.get("/papers", async (req, res, next) => {
   try {
     const filters = {
-      year: req.query.year ? parseInt(req.query.year) : null,
+      year: req.query.year,
       published_in: req.query.published_in,
-      limit: req.query.limit ? parseInt(req.query.limit) : 10,
-      offset: req.query.offset ? parseInt(req.query.offset) : 0,
+      limit: req.query.limit ? req.query.limit === undefined : 10,
+      offset: req.query.offset ? req.query.offset === undefined : 0,
     };
 
     const maxLimit = 100;
 
+    
+    
 
-    if(filters.year !== null && (filters.year <= 1900 || filters.year > new Date().getFullYear()) ){
+    if (filters.year !== undefined){
+      if(filters.year <= 1900 || isNaN(filters.year) || !/^\d{4,}$/.test(filters.year) ){
+        throw { type: "Invalid_Query_Parameter"};
+      }
+    }else{ 
+      filters.year  = null;
+    }
+
+
+    if (isNaN(filters.limit) || !/^\d{1,3}$/.test(filters.limit) || parseInt(filters.limit) > maxLimit || parseInt(filters.limit) < 0 ) {
       throw { type: "Invalid_Query_Parameter"};
     }
 
 
-    if (filters.limit > maxLimit || filters.limit < 0) {
-      throw { type: "Invalid_Query_Parameter"};
-    }
-
-
-    if (filters.offset < 0) {
+    if (isNaN(filters.offset) || filters.offset.trim() === "" || !/^\d+$/.test(filters.offset) || parseInt(filters.offset) < 0 ) {
       throw { type: "Invalid_Query_Parameter"};
     } 
 
@@ -40,7 +46,7 @@ router.get("/papers", async (req, res, next) => {
     
     const papers = Object.values(result);
 
-    res.status(201).json(papers);
+    res.status(200).json(papers);
 
 
   } catch (error) {
@@ -53,14 +59,23 @@ router.get("/papers/:id", validateId, async (req, res, next) => {
   try {
     // Your implementation here
 
-
-
     const result_paper = await dbOperations.getPaperById(req.params.id);
 
 
     if (result_paper === undefined || result_paper === null) {
       throw { type: "Not_Found_Error" };
+    }else{
+      
+      // change timestamp format to ISO 8601
+      result_paper.created_at = new Date(result_paper.created_at).toISOString();
+      result_paper.updated_at = new Date(result_paper.updated_at).toISOString();
+
     }
+
+
+    res.status(200).json(result_paper);
+
+
 
   } catch (error) {
     next(error);
@@ -105,6 +120,7 @@ router.post("/papers", async (req, res, next) => {
 // PUT /api/papers/:id
 router.put("/papers/:id", validateId, async (req, res, next) => {
   try {
+
     const errors = validatePaper(req.body);
     if (errors.length > 0) {
       throw { type: "Validation_Error", messages: errors };
@@ -127,7 +143,7 @@ router.put("/papers/:id", validateId, async (req, res, next) => {
 
 
 
-    res.status(201).json(result_paper);
+    res.status(200).json(result_paper);
 
     // Your implementation here
   } catch (error) {

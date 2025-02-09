@@ -39,10 +39,10 @@ const validatePaper = (paper) => {
     }
 
     if (paper.year === undefined || paper.year === null || paper.year === "") {
+
       errors.push("Published year is required");
     } else {
-      const yearInt = parseInt(paper.year, 10);
-      if (isNaN(yearInt) || yearInt <= 1900 || yearInt > new Date().getFullYear() ) {
+      if ( typeof paper.year !== "number" || !Number.isInteger(paper.year) || paper.year <= 1900 ) {
         errors.push("Valid year after 1900 is required");
       }
     }
@@ -113,9 +113,10 @@ const validateId = (req, res, next) => {
   // }
   //
   // If valid, call next()
+  
 
+  if ( isNaN(req.params.id) || req.params.id === "" || req.params.id === undefined || req.params.id === null || !/^\d+$/.test(req.params.id) || parseInt(req.params.id) <= 0   ) {
 
-  if ( isNaN(req.params.id) || req.params.id === undefined || req.params.id === null || req.params.id < 0 ) {
     res.status(400).json({
       "error": "Validation Error",
       "message": "Invalid ID format"

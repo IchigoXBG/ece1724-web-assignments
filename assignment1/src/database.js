@@ -10,6 +10,21 @@ const db = new sqlite3.Database("./paper_management.db", (err) => {
 
 // TODO: Create a table named papers with the schema specified in the handout
 
+db.serialize(() => {
+  // 创建 papers 表（如果不存在）
+  db.run(`
+    CREATE TABLE IF NOT EXISTS papers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      authors TEXT NOT NULL,
+      published_in TEXT NOT NULL,
+      year INTEGER NOT NULL CHECK (year > 1900),
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `, (err) => {err});
+});
+
 // TODO: Implement these database operations
 const dbOperations = {
   createPaper: async (paper) => {
